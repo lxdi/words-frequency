@@ -26,6 +26,9 @@ public class WordsFrequencyService {
     @Value("${output.file.path}")
     private String outputFilePath;
 
+    @Value("${input.file.parse.cols}")
+    private String inputFileParseMode;
+
     @Autowired
     private ExcelParserService excelParserService;
 
@@ -43,7 +46,20 @@ public class WordsFrequencyService {
 
         GenerationContext context = createContext();
         Map<String, Long> freqDict = csvParserService.parse(context.getFrequencyDict());
-        List<String> wordsInput = excelParserService.parse(context.getInputFile());
+
+        List<String> wordsInput = null;
+
+        if(inputFileParseMode.equalsIgnoreCase("single")){
+            wordsInput = excelParserService.parseSingleColumn(context.getInputFile());
+        }
+
+        if(inputFileParseMode.equalsIgnoreCase("multiple")){
+            wordsInput = excelParserService.parseMultipleColumn(context.getInputFile());
+        }
+
+        if(wordsInput == null){
+            throw new RuntimeException("No input data");
+        }
 
         excelGeneratorService.generate(
                 searchFrequencyService.find(wordsInput, freqDict), context.getOutputFile());
