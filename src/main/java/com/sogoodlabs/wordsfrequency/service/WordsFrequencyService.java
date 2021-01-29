@@ -8,8 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 @Service
@@ -19,6 +21,9 @@ public class WordsFrequencyService {
 
     @Value("${frequency.dict}")
     private String frequencyDictPath;
+
+    @Value("${ef.dict}")
+    private String efDictPath;
 
     @Value("${input.file.path}")
     private String inputFilePath;
@@ -47,7 +52,10 @@ public class WordsFrequencyService {
         GenerationContext context = createContext();
         Map<String, Long> freqDict = csvParserService.parse(context.getFrequencyDict());
 
+        Set<String> efWords = new HashSet<>(excelParserService.parseSingleColumn(context.getEfDict()));
+
         List<String> wordsInput = null;
+
 
         if(inputFileParseMode.equalsIgnoreCase("single")){
             wordsInput = excelParserService.parseSingleColumn(context.getInputFile());
@@ -62,7 +70,7 @@ public class WordsFrequencyService {
         }
 
         excelGeneratorService.generate(
-                searchFrequencyService.find(wordsInput, freqDict), context.getOutputFile());
+                searchFrequencyService.find(wordsInput, freqDict, efWords), context.getOutputFile());
     }
 
     private GenerationContext createContext(){
@@ -70,6 +78,12 @@ public class WordsFrequencyService {
 
         if(!freqDictFile.exists()){
             throw new RuntimeException("Frequency dictionary file doesn't exist " + frequencyDictPath);
+        }
+
+        File efDictFile = new File(efDictPath);
+
+        if(!efDictFile.exists()){
+            throw new RuntimeException("EF dictionary file doesn't exist " + efDictPath);
         }
 
         File inputFile = new File(inputFilePath);
@@ -84,7 +98,7 @@ public class WordsFrequencyService {
             throw new RuntimeException("Output file already exists " + outputFile);
         }
 
-        return new GenerationContext(freqDictFile, inputFile, outputFile);
+        return new GenerationContext(freqDictFile, efDictFile, inputFile, outputFile);
     }
 
 }

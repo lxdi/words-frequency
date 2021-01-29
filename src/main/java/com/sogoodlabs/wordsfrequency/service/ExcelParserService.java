@@ -1,5 +1,6 @@
 package com.sogoodlabs.wordsfrequency.service;
 
+import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -17,17 +18,21 @@ public class ExcelParserService {
 
     Logger log = LoggerFactory.getLogger(ExcelParserService.class);
 
+    private final static int COLUMN_NUM_DEFAULT = 1;
+    private final static int ROW_START_DEFAULT = 1;
+
+
     public List<String> parseSingleColumn(File file){
-        return parse(file, false);
+        return parse(file, false, COLUMN_NUM_DEFAULT);
     }
 
     public List<String> parseMultipleColumn(File file){
-        return parse(file, true);
+        return parse(file, true, COLUMN_NUM_DEFAULT);
     }
 
-    private List<String> parse(File file, boolean isMultipleColumns){
+    private List<String> parse(File file, boolean isMultipleColumns, int column){
 
-        log.info("Parsing input words [{} columns]", isMultipleColumns? "multiple": "single");
+        log.info("Parsing excel file {}, mode [{} columns]", file.getAbsolutePath(), isMultipleColumns? "multiple": "single");
 
         List<String> result = new ArrayList<>();
 
@@ -37,29 +42,42 @@ public class ExcelParserService {
                 XSSFSheet worksheet = workbook.getSheetAt(i);
 
                 if(isMultipleColumns){
-                    handleMultipleColumnSheet(worksheet, result);
+                    handleMultipleColumnSheet(worksheet, result, column);
                 } else {
-                    handleSingleColumnSheet(worksheet, result);
+                    handleSingleColumnSheet(worksheet, result, column);
                 }
             }
         } catch (Exception ex){
             throw new RuntimeException("Couldn't parse excel file", ex);
         }
 
-        log.info("Successfully parsed {} words", result.size());
+        log.info("Successfully parsed {} excel", result.size());
         return result;
     }
 
-    private void handleSingleColumnSheet(XSSFSheet worksheet, List<String> result){
-        for (int i = 1; i < worksheet.getPhysicalNumberOfRows(); i++) {
+    private void handleSingleColumnSheet(XSSFSheet worksheet, List<String> result, int column){
+        for (int i = ROW_START_DEFAULT; i < worksheet.getPhysicalNumberOfRows(); i++) {
             XSSFRow row = worksheet.getRow(i);
+
+            if(row == null){
+                log.warn("No row; row {} col {}, sheet {}", i, column, worksheet.getSheetName());
+                continue;
+            }
+
+            XSSFCell cell = row.getCell(column);
+
+            if(cell == null){
+                log.warn("No cell row {} col {}, sheet {}", i, column, worksheet.getSheetName());
+                continue;
+            }
+
             //log.info("{}: {}", row.getCell(0).getNumericCellValue(), row.getCell(1).getStringCellValue());
-            result.add(row.getCell(1).getStringCellValue());
+            result.add(row.getCell(column).getStringCellValue());
         }
     }
 
-    private void handleMultipleColumnSheet(XSSFSheet worksheet, List<String> result){
-        int cellNum = 1;
+    private void handleMultipleColumnSheet(XSSFSheet worksheet, List<String> result, int column){
+        int cellNum = column;
         while(worksheet.getRow(0)!=null && worksheet.getRow(0).getCell(cellNum)!=null) {
             for (int i = 0; i < worksheet.getPhysicalNumberOfRows(); i++) {
                 XSSFRow row = worksheet.getRow(i);

@@ -5,11 +5,13 @@ import java.io.File;
 public class GenerationContext {
 
     private File frequencyDict;
+    private File efDict;
     private File inputFile;
     private File outputFile;
 
-    public GenerationContext(File frequencyDict, File inputFile, File outputFile) {
+    public GenerationContext(File frequencyDict, File efDict, File inputFile, File outputFile) {
         this.frequencyDict = frequencyDict;
+        this.efDict = efDict;
         this.inputFile = inputFile;
         this.outputFile = outputFile;
     }
@@ -38,4 +40,11 @@ public class GenerationContext {
         this.outputFile = outputFile;
     }
 
+    public File getEfDict() {
+        return efDict;
+    }
+
+    public void setEfDict(File efDict) {
+        this.efDict = efDict;
+    }
 }

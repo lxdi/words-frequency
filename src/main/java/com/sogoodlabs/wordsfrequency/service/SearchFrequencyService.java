@@ -2,17 +2,19 @@ package com.sogoodlabs.wordsfrequency.service;
 
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class SearchFrequencyService {
 
-    public Map<String, Long> find(List<String> words, Map<String, Long> dict){
-        Map<String, Long> result = new LinkedHashMap<>();
-        words.forEach(word -> result.put(word, dict.getOrDefault(word, 0L)));
+    public Map<String, List<Object>> find(List<String> words, Map<String, Long> freqDict, Set<String> efWords){
+        Map<String, List<Object>> result = new LinkedHashMap<>();
+
+        words.forEach(word -> {
+            String ef = efWords.contains(word)?"ef":"";
+            result.put(word, new ArrayList<>(Arrays.asList(freqDict.getOrDefault(word, 0L), ef)));
+        });
+
         return result;
     }
 
